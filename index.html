@@ -4,49 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menú del Día</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.1/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-    </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script>
-        const { useState, useEffect, createElement: h } = React;
-
-        // Iconos SVG simples
-        const Camera = () => h('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
-            h('path', { d: 'M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z' }),
-            h('circle', { cx: 12, cy: 13, r: 4 })
-        );
-
-        const Download = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
-            h('path', { d: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4' }),
-            h('polyline', { points: '7 10 12 15 17 10' }),
-            h('line', { x1: 12, y1: 15, x2: 12, y2: 3 })
-        );
-
-        const Trash2 = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
-            h('polyline', { points: '3 6 5 6 21 6' }),
-            h('path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' })
-        );
-
-        const Edit2 = () => h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
-            h('path', { d: 'M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z' })
-        );
-
-        const Users = () => h('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 },
-            h('path', { d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
-            h('circle', { cx: 9, cy: 7, r: 4 }),
-            h('path', { d: 'M23 21v-2a4 4 0 0 0-3-3.87' }),
-            h('path', { d: 'M16 3.13a4 4 0 0 1 0 7.75' })
-        );
-
-        // Storage simulado
+        // Simular window.storage
         window.storage = {
             async get(key) {
                 const value = localStorage.getItem(key);
@@ -59,523 +28,587 @@
             async delete(key) {
                 localStorage.removeItem(key);
                 return { key, deleted: true, shared: false };
+            },
+            async list(prefix) {
+                const keys = Object.keys(localStorage).filter(k => !prefix || k.startsWith(prefix));
+                return { keys, prefix, shared: false };
             }
         };
+    </script>
 
-        function MenuDelDia() {
-            const [username, setUsername] = useState('');
-            const [isLoggedIn, setIsLoggedIn] = useState(false);
-            const [menuDate, setMenuDate] = useState('');
-            const [menuImage, setMenuImage] = useState('');
-            const [primeros, setPrimeros] = useState([]);
-            const [segundos, setSegundos] = useState([]);
-            const [postres, setPostres] = useState([]);
-            const [pedidos, setPedidos] = useState([]);
-            const [editingPedido, setEditingPedido] = useState(null);
-            const [selectedPedido, setSelectedPedido] = useState('Saica 4A');
-            const [selectedPrimero1, setSelectedPrimero1] = useState('');
-            const [selectedPrimero2, setSelectedPrimero2] = useState('');
-            const [selectedSegundo, setSelectedSegundo] = useState('');
-            const [selectedPostre, setSelectedPostre] = useState('');
-            const [menuType, setMenuType] = useState('1P+1S+1Postre');
-            const [showImageUpload, setShowImageUpload] = useState(false);
-            const [menuText, setMenuText] = useState('');
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { Camera, Download, Trash2, Edit2, Users } = lucide;
 
-            useEffect(() => {
-                loadData();
-                const interval = setInterval(loadData, 3000);
-                return () => clearInterval(interval);
-            }, []);
+        const MenuDelDia = () => {
+          const [username, setUsername] = useState('');
+          const [isLoggedIn, setIsLoggedIn] = useState(false);
+          const [menuDate, setMenuDate] = useState('');
+          const [menuImage, setMenuImage] = useState('');
+          const [primeros, setPrimeros] = useState([]);
+          const [segundos, setSegundos] = useState([]);
+          const [postres, setPostres] = useState([]);
+          const [pedidos, setPedidos] = useState([]);
+          const [editingPedido, setEditingPedido] = useState(null);
+          const [selectedPedido, setSelectedPedido] = useState('Saica 4A');
+          const [selectedPrimero1, setSelectedPrimero1] = useState('');
+          const [selectedPrimero2, setSelectedPrimero2] = useState('');
+          const [selectedSegundo, setSelectedSegundo] = useState('');
+          const [selectedPostre, setSelectedPostre] = useState('');
+          const [menuType, setMenuType] = useState('1P+1S+1Postre');
+          const [showImageUpload, setShowImageUpload] = useState(false);
+          const [menuText, setMenuText] = useState('');
 
-            const loadData = async () => {
-                try {
-                    const dateResult = await window.storage.get('menu-date');
-                    const today = new Date().toISOString().split('T')[0];
-                    
-                    if (dateResult && dateResult.value !== today) {
-                        await resetDay();
-                        return;
-                    }
+          useEffect(() => {
+            loadData();
+            const interval = setInterval(loadData, 3000);
+            return () => clearInterval(interval);
+          }, []);
 
-                    if (dateResult) setMenuDate(dateResult.value);
-                    
-                    const imageResult = await window.storage.get('menu-image');
-                    if (imageResult) setMenuImage(imageResult.value);
-                    
-                    const primerosResult = await window.storage.get('menu-primeros');
-                    if (primerosResult) setPrimeros(JSON.parse(primerosResult.value));
-                    
-                    const segundosResult = await window.storage.get('menu-segundos');
-                    if (segundosResult) setSegundos(JSON.parse(segundosResult.value));
-                    
-                    const postresResult = await window.storage.get('menu-postres');
-                    if (postresResult) setPostres(JSON.parse(postresResult.value));
-                    
-                    const pedidosResult = await window.storage.get('pedidos');
-                    if (pedidosResult) setPedidos(JSON.parse(pedidosResult.value));
-                } catch (error) {
-                    console.log('Iniciando datos nuevos');
-                }
-            };
+          const loadData = async () => {
+            try {
+              const dateResult = await window.storage.get('menu-date');
+              const today = new Date().toISOString().split('T')[0];
+              
+              if (dateResult && dateResult.value !== today) {
+                await resetDay();
+                return;
+              }
 
-            const resetDay = async () => {
-                try {
-                    const today = new Date().toISOString().split('T')[0];
-                    await window.storage.set('menu-date', today);
-                    await window.storage.delete('menu-image');
-                    await window.storage.delete('menu-primeros');
-                    await window.storage.delete('menu-segundos');
-                    await window.storage.delete('menu-postres');
-                    await window.storage.delete('pedidos');
-                    
-                    setMenuDate(today);
-                    setMenuImage('');
-                    setPrimeros([]);
-                    setSegundos([]);
-                    setPostres([]);
-                    setPedidos([]);
-                } catch (error) {
-                    console.error('Error al resetear:', error);
-                }
-            };
+              if (dateResult) setMenuDate(dateResult.value);
+              
+              const imageResult = await window.storage.get('menu-image');
+              if (imageResult) setMenuImage(imageResult.value);
+              
+              const primerosResult = await window.storage.get('menu-primeros');
+              if (primerosResult) setPrimeros(JSON.parse(primerosResult.value));
+              
+              const segundosResult = await window.storage.get('menu-segundos');
+              if (segundosResult) setSegundos(JSON.parse(segundosResult.value));
+              
+              const postresResult = await window.storage.get('menu-postres');
+              if (postresResult) setPostres(JSON.parse(postresResult.value));
+              
+              const pedidosResult = await window.storage.get('pedidos');
+              if (pedidosResult) setPedidos(JSON.parse(pedidosResult.value));
+            } catch (error) {
+              console.log('Iniciando datos nuevos');
+            }
+          };
 
-            const handleLogin = () => {
-                if (username.trim()) {
-                    setIsLoggedIn(true);
-                }
-            };
+          const resetDay = async () => {
+            try {
+              const today = new Date().toISOString().split('T')[0];
+              await window.storage.set('menu-date', today);
+              await window.storage.delete('menu-image');
+              await window.storage.delete('menu-primeros');
+              await window.storage.delete('menu-segundos');
+              await window.storage.delete('menu-postres');
+              await window.storage.delete('pedidos');
+              
+              setMenuDate(today);
+              setMenuImage('');
+              setPrimeros([]);
+              setSegundos([]);
+              setPostres([]);
+              setPedidos([]);
+            } catch (error) {
+              console.error('Error al resetear:', error);
+            }
+          };
 
-            const handleImageUpload = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        setMenuImage(event.target.result);
-                        setShowImageUpload(false);
-                        setMenuText('');
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
+          const handleLogin = () => {
+            if (username.trim()) {
+              setIsLoggedIn(true);
+            }
+          };
 
-            const saveMenu = async () => {
-                const lines = menuText.split('\n').filter(l => l.trim());
-                const newPrimeros = [];
-                const newSegundos = [];
-                const newPostres = [];
-                
-                let currentSection = '';
-                
-                lines.forEach(line => {
-                    const lower = line.toLowerCase();
-                    if (lower.includes('primero')) {
-                        currentSection = 'primeros';
-                    } else if (lower.includes('segundo')) {
-                        currentSection = 'segundos';
-                    } else if (lower.includes('postre')) {
-                        currentSection = 'postres';
-                    } else if (line.trim() && !lower.includes(':')) {
-                        const cleaned = line.replace(/^[-•*]\s*/, '').trim();
-                        if (cleaned) {
-                            if (currentSection === 'primeros') newPrimeros.push(cleaned);
-                            else if (currentSection === 'segundos') newSegundos.push(cleaned);
-                            else if (currentSection === 'postres') newPostres.push(cleaned);
-                        }
-                    }
-                });
+          const handleImageUpload = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                setMenuImage(event.target.result);
+                setShowImageUpload(false);
+                setMenuText('');
+              };
+              reader.readAsDataURL(file);
+            }
+          };
 
-                try {
-                    const today = new Date().toISOString().split('T')[0];
-                    await window.storage.set('menu-date', today);
-                    await window.storage.set('menu-image', menuImage);
-                    await window.storage.set('menu-primeros', JSON.stringify(newPrimeros));
-                    await window.storage.set('menu-segundos', JSON.stringify(newSegundos));
-                    await window.storage.set('menu-postres', JSON.stringify(newPostres));
-                    
-                    setMenuDate(today);
-                    setPrimeros(newPrimeros);
-                    setSegundos(newSegundos);
-                    setPostres(newPostres);
-                    setShowImageUpload(false);
-                } catch (error) {
-                    alert('Error al guardar el menú');
-                }
-            };
+          const saveMenu = async () => {
+            const lines = menuText.split('\n').filter(l => l.trim());
+            const newPrimeros = [];
+            const newSegundos = [];
+            const newPostres = [];
+            
+            let currentSection = '';
+            
+            lines.forEach(line => {
+              const lower = line.toLowerCase();
+              if (lower.includes('primero')) {
+                currentSection = 'primeros';
+              } else if (lower.includes('segundo')) {
+                currentSection = 'segundos';
+              } else if (lower.includes('postre')) {
+                currentSection = 'postres';
+              } else if (line.trim() && !lower.includes(':')) {
+                if (currentSection === 'primeros') newPrimeros.push(line.trim());
+                else if (currentSection === 'segundos') newSegundos.push(line.trim());
+                else if (currentSection === 'postres') newPostres.push(line.trim());
+              }
+            });
 
-            const canSelect2Segundos = () => {
-                return pedidos.some(p => p.tipo === '2P+1Postre');
-            };
+            try {
+              const today = new Date().toISOString().split('T')[0];
+              await window.storage.set('menu-date', today);
+              await window.storage.set('menu-image', menuImage);
+              await window.storage.set('menu-primeros', JSON.stringify(newPrimeros));
+              await window.storage.set('menu-segundos', JSON.stringify(newSegundos));
+              await window.storage.set('menu-postres', JSON.stringify(newPostres));
+              
+              setMenuDate(today);
+              setPrimeros(newPrimeros);
+              setSegundos(newSegundos);
+              setPostres(newPostres);
+              setShowImageUpload(false);
+            } catch (error) {
+              alert('Error al guardar el menú');
+            }
+          };
 
-            const canDeleteOrEdit = (pedido) => {
-                if (pedido.tipo === '2P+1Postre') {
-                    const has2Segundos = pedidos.some(p => p.tipo === '2S+1Postre');
-                    if (has2Segundos) return false;
-                }
-                return true;
-            };
+          const canSelect2Segundos = () => {
+            return pedidos.some(p => p.tipo === '2P+1Postre');
+          };
 
-            const handleSubmitPedido = async () => {
-                if (!selectedPostre) {
-                    alert('Debes seleccionar al menos un postre');
-                    return;
-                }
+          const canDeleteOrEdit = (pedido) => {
+            if (pedido.tipo === '2P+1Postre') {
+              const has2Segundos = pedidos.some(p => p.tipo === '2S+1Postre');
+              if (has2Segundos) return false;
+            }
+            return true;
+          };
 
-                if (menuType === '1P+1S+1Postre' && (!selectedPrimero1 || !selectedSegundo)) {
-                    alert('Debes seleccionar un primero y un segundo');
-                    return;
-                }
-
-                if (menuType === '2P+1Postre' && !selectedPrimero1) {
-                    alert('Debes seleccionar al menos un primero');
-                    return;
-                }
-
-                if (menuType === '2S+1Postre' && !selectedSegundo) {
-                    alert('Debes seleccionar al menos un segundo');
-                    return;
-                }
-
-                const newPedido = {
-                    id: editingPedido ? editingPedido.id : Date.now(),
-                    usuario: username,
-                    pedido: selectedPedido,
-                    tipo: menuType,
-                    primero1: selectedPrimero1,
-                    primero2: menuType === '2P+1Postre' ? selectedPrimero2 : '',
-                    segundo: menuType === '2S+1Postre' ? '' : selectedSegundo,
-                    segundo2: menuType === '2S+1Postre' ? selectedSegundo : '',
-                    postre: selectedPostre,
-                    timestamp: Date.now()
-                };
-
-                let updatedPedidos;
-                if (editingPedido) {
-                    updatedPedidos = pedidos.map(p => p.id === editingPedido.id ? newPedido : p);
-                } else {
-                    updatedPedidos = [...pedidos, newPedido];
-                }
-
-                try {
-                    await window.storage.set('pedidos', JSON.stringify(updatedPedidos));
-                    setPedidos(updatedPedidos);
-                    resetForm();
-                } catch (error) {
-                    alert('Error al guardar el pedido');
-                }
-            };
-
-            const resetForm = () => {
-                setSelectedPrimero1('');
-                setSelectedPrimero2('');
-                setSelectedSegundo('');
-                setSelectedPostre('');
-                setMenuType('1P+1S+1Postre');
-                setEditingPedido(null);
-            };
-
-            const handleEdit = (pedido) => {
-                if (!canDeleteOrEdit(pedido)) {
-                    alert('No puedes editar este pedido porque hay pedidos de 2 segundos que dependen de él');
-                    return;
-                }
-                setEditingPedido(pedido);
-                setSelectedPedido(pedido.pedido);
-                setMenuType(pedido.tipo);
-                setSelectedPrimero1(pedido.primero1);
-                setSelectedPrimero2(pedido.primero2);
-                setSelectedSegundo(pedido.segundo || pedido.segundo2);
-                setSelectedPostre(pedido.postre);
-            };
-
-            const handleDelete = async (pedido) => {
-                if (!canDeleteOrEdit(pedido)) {
-                    alert('No puedes eliminar este pedido porque hay pedidos de 2 segundos que dependen de él');
-                    return;
-                }
-                
-                const updatedPedidos = pedidos.filter(p => p.id !== pedido.id);
-                try {
-                    await window.storage.set('pedidos', JSON.stringify(updatedPedidos));
-                    setPedidos(updatedPedidos);
-                } catch (error) {
-                    alert('Error al eliminar el pedido');
-                }
-            };
-
-            const generateExcel = (pedido) => {
-                const filteredPedidos = pedidos.filter(p => p.pedido === pedido);
-                
-                const detailData = [
-                    ['Fecha', menuDate],
-                    ['Pedido', pedido],
-                    [],
-                    ['Usuario', 'Tipo de Menú', 'Primero 1', 'Primero 2', 'Segundo 1', 'Segundo 2', 'Postre']
-                ];
-
-                filteredPedidos.forEach(p => {
-                    detailData.push([
-                        p.usuario,
-                        p.tipo,
-                        p.primero1 || '',
-                        p.primero2 || '',
-                        p.segundo || '',
-                        p.segundo2 || '',
-                        p.postre
-                    ]);
-                });
-
-                const contadores = {};
-                filteredPedidos.forEach(p => {
-                    if (p.primero1) contadores[p.primero1] = (contadores[p.primero1] || 0) + 1;
-                    if (p.primero2) contadores[p.primero2] = (contadores[p.primero2] || 0) + 1;
-                    if (p.segundo) contadores[p.segundo] = (contadores[p.segundo] || 0) + 1;
-                    if (p.segundo2) contadores[p.segundo2] = (contadores[p.segundo2] || 0) + 1;
-                    if (p.postre) contadores[p.postre] = (contadores[p.postre] || 0) + 1;
-                });
-
-                const totalsData = [
-                    ['Fecha', menuDate],
-                    ['Pedido', pedido],
-                    ['Total Comensales', filteredPedidos.length],
-                    [],
-                    ['Plato', 'Cantidad']
-                ];
-
-                Object.entries(contadores).forEach(([plato, cantidad]) => {
-                    totalsData.push([plato, cantidad]);
-                });
-
-                const wb = XLSX.utils.book_new();
-                const ws1 = XLSX.utils.aoa_to_sheet(detailData);
-                const ws2 = XLSX.utils.aoa_to_sheet(totalsData);
-                
-                XLSX.utils.book_append_sheet(wb, ws1, 'Detalle');
-                XLSX.utils.book_append_sheet(wb, ws2, 'Totales');
-                
-                XLSX.writeFile(wb, `Menu_${pedido}_${menuDate}.xlsx`);
-            };
-
-            if (!isLoggedIn) {
-                return h('div', { className: 'min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4' },
-                    h('div', { className: 'bg-white rounded-2xl shadow-xl p-8 w-full max-w-md' },
-                        h('h1', { className: 'text-3xl font-bold text-gray-800 mb-6 text-center' }, 'Menú del Día'),
-                        h('input', {
-                            type: 'text',
-                            placeholder: 'Introduce tu nombre',
-                            value: username,
-                            onChange: (e) => setUsername(e.target.value),
-                            onKeyPress: (e) => e.key === 'Enter' && handleLogin(),
-                            className: 'w-full px-4 py-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-orange-500 outline-none'
-                        }),
-                        h('button', {
-                            onClick: handleLogin,
-                            className: 'w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition'
-                        }, 'Entrar')
-                    )
-                );
+          const handleSubmitPedido = async () => {
+            if (!selectedPostre) {
+              alert('Debes seleccionar al menos un postre');
+              return;
             }
 
-            return h('div', { className: 'min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4' },
-                h('div', { className: 'max-w-6xl mx-auto' },
-                    // Header
-                    h('div', { className: 'bg-white rounded-2xl shadow-xl p-6 mb-6' },
-                        h('div', { className: 'flex justify-between items-center mb-4' },
-                            h('h1', { className: 'text-3xl font-bold text-gray-800' }, 'Menú del Día'),
-                            h('div', { className: 'text-right' },
-                                h('p', { className: 'text-sm text-gray-600' }, 'Usuario: ' + username),
-                                h('p', { className: 'text-sm text-gray-600' }, menuDate)
-                            )
-                        ),
-                        !menuImage ?
-                            h('button', {
-                                onClick: () => setShowImageUpload(true),
-                                className: 'w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2'
-                            }, h(Camera), 'Subir Menú del Día')
-                        :
-                            h('div', { className: 'mb-4' },
-                                h('img', { src: menuImage, alt: 'Menú', className: 'w-full rounded-lg mb-2' }),
-                                h('button', {
-                                    onClick: () => setShowImageUpload(true),
-                                    className: 'text-blue-500 hover:text-blue-600'
-                                }, 'Cambiar imagen')
-                            )
-                    ),
+            if (menuType === '1P+1S+1Postre' && (!selectedPrimero1 || !selectedSegundo)) {
+              alert('Debes seleccionar un primero y un segundo');
+              return;
+            }
 
-                    // Upload section
-                    showImageUpload && h('div', { className: 'bg-white rounded-2xl shadow-xl p-6 mb-6' },
-                        h('h2', { className: 'text-xl font-bold mb-4' }, 'Subir Menú'),
-                        h('input', {
-                            type: 'file',
-                            accept: 'image/*',
-                            onChange: handleImageUpload,
-                            className: 'mb-4 w-full'
-                        }),
-                        h('textarea', {
-                            placeholder: 'Escribe el menú aquí:\n\nPRIMEROS:\n- Plato 1\n- Plato 2\n\nSEGUNDOS:\n- Plato 1\n- Plato 2\n\nPOSTRES:\n- Postre 1\n- Postre 2',
-                            value: menuText,
-                            onChange: (e) => setMenuText(e.target.value),
-                            className: 'w-full h-64 px-4 py-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-orange-500 outline-none',
-                            style: { fontFamily: 'monospace' }
-                        }),
-                        h('div', { className: 'flex gap-2' },
-                            h('button', {
-                                onClick: saveMenu,
-                                className: 'flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition'
-                            }, 'Guardar Menú'),
-                            h('button', {
-                                onClick: () => setShowImageUpload(false),
-                                className: 'px-6 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition'
-                            }, 'Cancelar')
-                        )
-                    ),
+            if (menuType === '2P+1Postre' && !selectedPrimero1) {
+              alert('Debes seleccionar al menos un primero');
+              return;
+            }
 
-                    // Order form
-                    primeros.length > 0 && h('div', { className: 'bg-white rounded-2xl shadow-xl p-6 mb-6' },
-                        h('h2', { className: 'text-2xl font-bold mb-4' }, 'Hacer tu Pedido'),
-                        
-                        h('div', { className: 'mb-4' },
-                            h('label', { className: 'block text-sm font-semibold mb-2' }, 'Pedido:'),
-                            h('select', {
-                                value: selectedPedido,
-                                onChange: (e) => setSelectedPedido(e.target.value),
-                                className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none'
-                            },
-                                h('option', { value: 'Saica 4A' }, 'Saica 4A'),
-                                h('option', { value: 'Saica 4B' }, 'Saica 4B')
-                            )
-                        ),
+            if (menuType === '2S+1Postre' && !selectedSegundo) {
+              alert('Debes seleccionar al menos un segundo');
+              return;
+            }
 
-                        h('div', { className: 'mb-4' },
-                            h('label', { className: 'block text-sm font-semibold mb-2' }, 'Tipo de Menú:'),
-                            h('select', {
-                                value: menuType,
-                                onChange: (e) => setMenuType(e.target.value),
-                                className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none'
-                            },
-                                h('option', { value: '1P+1S+1Postre' }, '1 Primero + 1 Segundo + 1 Postre'),
-                                h('option', { value: '2P+1Postre' }, '2 Primeros + 1 Postre'),
-                                canSelect2Segundos() && h('option', { value: '2S+1Postre' }, '2 Segundos + 1 Postre')
-                            )
-                        ),
+            const newPedido = {
+              id: editingPedido ? editingPedido.id : Date.now(),
+              usuario: username,
+              pedido: selectedPedido,
+              tipo: menuType,
+              primero1: selectedPrimero1,
+              primero2: menuType === '2P+1Postre' ? selectedPrimero2 : '',
+              segundo: menuType === '2S+1Postre' ? '' : selectedSegundo,
+              segundo2: menuType === '2S+1Postre' ? selectedSegundo : '',
+              postre: selectedPostre,
+              timestamp: Date.now()
+            };
 
-                        (menuType === '1P+1S+1Postre' || menuType === '2P+1Postre') && h('div', { className: 'mb-4' },
-                            h('label', { className: 'block text-sm font-semibold mb-2' }, 'Primer Plato:'),
-                            h('select', {
-                                value: selectedPrimero1,
-                                onChange: (e) => setSelectedPrimero1(e.target.value),
-                                className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none'
-                            },
-                                h('option', { value: '' }, 'Selecciona...'),
-                                primeros.map((p, i) => h('option', { key: i, value: p }, p))
-                            )
-                        ),
+            let updatedPedidos;
+            if (editingPedido) {
+              updatedPedidos = pedidos.map(p => p.id === editingPedido.id ? newPedido : p);
+            } else {
+              updatedPedidos = [...pedidos, newPedido];
+            }
 
-                        menuType === '2P+1Postre' && h('div', { className: 'mb-4' },
-                            h('label', { className: 'block text-sm font-semibold mb-2' }, 'Segundo Primer Plato:'),
-                            h('select', {
-                                value: selectedPrimero2,
-                                onChange: (e) => setSelectedPrimero2(e.target.value),
-                                className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none'
-                            },
-                                h('option', { value: '' }, 'Selecciona...'),
-                                primeros.map((p, i) => h('option', { key: i, value: p }, p))
-                            )
-                        ),
+            try {
+              await window.storage.set('pedidos', JSON.stringify(updatedPedidos));
+              setPedidos(updatedPedidos);
+              resetForm();
+            } catch (error) {
+              alert('Error al guardar el pedido');
+            }
+          };
 
-                        (menuType === '1P+1S+1Postre' || menuType === '2S+1Postre') && h('div', { className: 'mb-4' },
-                            h('label', { className: 'block text-sm font-semibold mb-2' }, 'Segundo Plato:'),
-                            h('select', {
-                                value: selectedSegundo,
-                                onChange: (e) => setSelectedSegundo(e.target.value),
-                                className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none'
-                            },
-                                h('option', { value: '' }, 'Selecciona...'),
-                                segundos.map((s, i) => h('option', { key: i, value: s }, s))
-                            )
-                        ),
+          const resetForm = () => {
+            setSelectedPrimero1('');
+            setSelectedPrimero2('');
+            setSelectedSegundo('');
+            setSelectedPostre('');
+            setMenuType('1P+1S+1Postre');
+            setEditingPedido(null);
+          };
 
-                        h('div', { className: 'mb-4' },
-                            h('label', { className: 'block text-sm font-semibold mb-2' }, 'Postre:'),
-                            h('select', {
-                                value: selectedPostre,
-                                onChange: (e) => setSelectedPostre(e.target.value),
-                                className: 'w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none'
-                            },
-                                h('option', { value: '' }, 'Selecciona...'),
-                                postres.map((p, i) => h('option', { key: i, value: p }, p))
-                            )
-                        ),
+          const handleEdit = (pedido) => {
+            if (!canDeleteOrEdit(pedido)) {
+              alert('No puedes editar este pedido porque hay pedidos de 2 segundos que dependen de él');
+              return;
+            }
+            setEditingPedido(pedido);
+            setSelectedPedido(pedido.pedido);
+            setMenuType(pedido.tipo);
+            setSelectedPrimero1(pedido.primero1);
+            setSelectedPrimero2(pedido.primero2);
+            setSelectedSegundo(pedido.segundo || pedido.segundo2);
+            setSelectedPostre(pedido.postre);
+          };
 
-                        h('div', { className: 'flex gap-2' },
-                            h('button', {
-                                onClick: handleSubmitPedido,
-                                className: 'flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition'
-                            }, editingPedido ? 'Actualizar Pedido' : 'Confirmar Pedido'),
-                            editingPedido && h('button', {
-                                onClick: resetForm,
-                                className: 'px-6 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition'
-                            }, 'Cancelar')
-                        )
-                    ),
+          const handleDelete = async (pedido) => {
+            if (!canDeleteOrEdit(pedido)) {
+              alert('No puedes eliminar este pedido porque hay pedidos de 2 segundos que dependen de él');
+              return;
+            }
+            
+            const updatedPedidos = pedidos.filter(p => p.id !== pedido.id);
+            try {
+              await window.storage.set('pedidos', JSON.stringify(updatedPedidos));
+              setPedidos(updatedPedidos);
+            } catch (error) {
+              alert('Error al eliminar el pedido');
+            }
+          };
 
-                    // Orders list
-                    pedidos.length > 0 && h('div', { className: 'bg-white rounded-2xl shadow-xl p-6 mb-6' },
-                        h('div', { className: 'flex justify-between items-center mb-4' },
-                            h('h2', { className: 'text-2xl font-bold flex items-center gap-2' },
-                                h(Users),
-                                `Pedidos Realizados (${pedidos.length})`
-                            ),
-                            h('div', { className: 'flex gap-2' },
-                                h('button', {
-                                    onClick: () => generateExcel('Saica 4A'),
-                                    className: 'bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2'
-                                }, h(Download), 'Saica 4A'),
-                                h('button', {
-                                    onClick: () => generateExcel('Saica 4B'),
-                                    className: 'bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2'
-                                }, h(Download), 'Saica 4B')
-                            )
-                        ),
-                        h('div', { className: 'space-y-3' },
-                            pedidos.map(pedido =>
-                                h('div', { key: pedido.id, className: 'border-2 border-gray-200 rounded-lg p-4' },
-                                    h('div', { className: 'flex justify-between items-start' },
-                                        h('div', { className: 'flex-1' },
-                                            h('div', { className: 'flex items-center gap-2 mb-2' },
-                                                h('span', { className: 'font-bold text-lg' }, pedido.usuario),
-                                                h('span', { className: 'text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded' }, pedido.pedido),
-                                                h('span', { className: 'text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded' }, pedido.tipo)
-                                            ),
-                                            h('div', { className: 'text-sm text-gray-700 space-y-1' },
-                                                pedido.primero1 && h('p', null, '• ' + pedido.primero1),
-                                                pedido.primero2 && h('p', null, '• ' + pedido.primero2),pedido.segundo && h('p', null, '• ' + pedido.segundo),
-pedido.segundo2 && h('p', null, '• ' + pedido.segundo2),
-pedido.postre && h('p', null, '• ' + pedido.postre)
-)
-),
-pedido.usuario === username && h('div', { className: 'flex gap-2' },
-h('button', {
-onClick: () => handleEdit(pedido),
-className: 'text-blue-600 hover:text-blue-700 p-2'
-}, h(Edit2)),
-h('button', {
-onClick: () => handleDelete(pedido),
-className: 'text-red-600 hover:text-red-700 p-2'
-}, h(Trash2))
-)
-)
-)
-)
-)
-)
-)
-);
-}
-const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(h(MenuDelDia));
-</script>
+          const generateExcel = (pedido) => {
+            const filteredPedidos = pedidos.filter(p => p.pedido === pedido);
+            
+            const detailData = [
+              ['Fecha', menuDate],
+              ['Pedido', pedido],
+              [],
+              ['Usuario', 'Tipo de Menú', 'Primero 1', 'Primero 2', 'Segundo 1', 'Segundo 2', 'Postre']
+            ];
+
+            filteredPedidos.forEach(p => {
+              detailData.push([
+                p.usuario,
+                p.tipo,
+                p.primero1 || '',
+                p.primero2 || '',
+                p.segundo || '',
+                p.segundo2 || '',
+                p.postre
+              ]);
+            });
+
+            const contadores = {};
+            filteredPedidos.forEach(p => {
+              if (p.primero1) contadores[p.primero1] = (contadores[p.primero1] || 0) + 1;
+              if (p.primero2) contadores[p.primero2] = (contadores[p.primero2] || 0) + 1;
+              if (p.segundo) contadores[p.segundo] = (contadores[p.segundo] || 0) + 1;
+              if (p.segundo2) contadores[p.segundo2] = (contadores[p.segundo2] || 0) + 1;
+              if (p.postre) contadores[p.postre] = (contadores[p.postre] || 0) + 1;
+            });
+
+            const totalsData = [
+              ['Fecha', menuDate],
+              ['Pedido', pedido],
+              ['Total Comensales', filteredPedidos.length],
+              [],
+              ['Plato', 'Cantidad']
+            ];
+
+            Object.entries(contadores).forEach(([plato, cantidad]) => {
+              totalsData.push([plato, cantidad]);
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws1 = XLSX.utils.aoa_to_sheet(detailData);
+            const ws2 = XLSX.utils.aoa_to_sheet(totalsData);
+            
+            XLSX.utils.book_append_sheet(wb, ws1, 'Detalle');
+            XLSX.utils.book_append_sheet(wb, ws2, 'Totales');
+            
+            XLSX.writeFile(wb, `Menu_${pedido}_${menuDate}.xlsx`);
+          };
+
+          if (!isLoggedIn) {
+            return (
+              <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+                  <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Menú del Día</h1>
+                  <input
+                    type="text"
+                    placeholder="Introduce tu nombre"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-orange-500 outline-none"
+                  />
+                  <button
+                    onClick={handleLogin}
+                    className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition"
+                  >
+                    Entrar
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 p-4">
+              <div className="max-w-6xl mx-auto">
+                <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-3xl font-bold text-gray-800">Menú del Día</h1>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Usuario: {username}</p>
+                      <p className="text-sm text-gray-600">{menuDate}</p>
+                    </div>
+                  </div>
+
+                  {!menuImage ? (
+                    <button
+                      onClick={() => setShowImageUpload(true)}
+                      className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition flex items-center justify-center gap-2"
+                    >
+                      <Camera size={20} />
+                      Subir Menú del Día
+                    </button>
+                  ) : (
+                    <div className="mb-4">
+                      <img src={menuImage} alt="Menú" className="w-full rounded-lg mb-2" />
+                      <button
+                        onClick={() => setShowImageUpload(true)}
+                        className="text-blue-500 hover:text-blue-600"
+                      >
+                        Cambiar imagen
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {showImageUpload && (
+                  <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                    <h2 className="text-xl font-bold mb-4">Subir Menú</h2>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="mb-4 w-full"
+                    />
+                    <textarea
+                      placeholder="Escribe el menú aquí:
+
+PRIMEROS:
+- Plato 1
+- Plato 2
+
+SEGUNDOS:
+- Plato 1
+- Plato 2
+
+POSTRES:
+- Postre 1
+- Postre 2"
+                      value={menuText}
+                      onChange={(e) => setMenuText(e.target.value)}
+                      className="w-full h-64 px-4 py-3 border-2 border-gray-300 rounded-lg mb-4 focus:border-orange-500 outline-none"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={saveMenu}
+                        className="flex-1 bg-green-500 text-white py-3 rounded-lg font-semibold hover:bg-green-600 transition"
+                      >
+                        Guardar Menú
+                      </button>
+                      <button
+                        onClick={() => setShowImageUpload(false)}
+                        className="px-6 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {primeros.length > 0 && (
+                  <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                    <h2 className="text-2xl font-bold mb-4">Hacer tu Pedido</h2>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-2">Pedido:</label>
+                      <select
+                        value={selectedPedido}
+                        onChange={(e) => setSelectedPedido(e.target.value)}
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none"
+                      >
+                        <option value="Saica 4A">Saica 4A</option>
+                        <option value="Saica 4B">Saica 4B</option>
+                      </select>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-2">Tipo de Menú:</label>
+                      <select
+                        value={menuType}
+                        onChange={(e) => setMenuType(e.target.value)}
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none"
+                      >
+                        <option value="1P+1S+1Postre">1 Primero + 1 Segundo + 1 Postre</option>
+                        <option value="2P+1Postre">2 Primeros + 1 Postre</option>
+                        {canSelect2Segundos() && <option value="2S+1Postre">2 Segundos + 1 Postre</option>}
+                      </select>
+                    </div>
+
+                    {(menuType === '1P+1S+1Postre' || menuType === '2P+1Postre') && (
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold mb-2">Primer Plato:</label>
+                        <select
+                          value={selectedPrimero1}
+                          onChange={(e) => setSelectedPrimero1(e.target.value)}
+                          className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none"
+                        >
+                          <option value="">Selecciona...</option>
+                          {primeros.map((p, i) => <option key={i} value={p}>{p}</option>)}
+                        </select>
+                      </div>
+                    )}
+
+                    {menuType === '2P+1Postre' && (
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold mb-2">Segundo Primer Plato:</label>
+                        <select
+                          value={selectedPrimero2}
+                          onChange={(e) => setSelectedPrimero2(e.target.value)}
+                          className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none"
+                        >
+                          <option value="">Selecciona...</option>
+                          {primeros.map((p, i) => <option key={i} value={p}>{p}</option>)}
+                        </select>
+                      </div>
+                    )}
+
+                    {(menuType === '1P+1S+1Postre' || menuType === '2S+1Postre') && (
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold mb-2">Segundo Plato:</label>
+                        <select
+                          value={selectedSegundo}
+                          onChange={(e) => setSelectedSegundo(e.target.value)}
+                          className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none"
+                        >
+                          <option value="">Selecciona...</option>
+                          {segundos.map((s, i) => <option key={i} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    )}
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-semibold mb-2">Postre:</label>
+                      <select
+                        value={selectedPostre}
+                        onChange={(e) => setSelectedPostre(e.target.value)}
+                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-orange-500 outline-none"
+                      >
+                        <option value="">Selecciona...</option>
+                        {postres.map((p, i) => <option key={i} value={p}>{p}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleSubmitPedido}
+                        className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition"
+                      >
+                        {editingPedido ? 'Actualizar Pedido' : 'Confirmar Pedido'}
+                      </button>
+                      {editingPedido && (
+                        <button
+                          onClick={resetForm}
+                          className="px-6 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {pedidos.length > 0 && (
+                  <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold flex items-center gap-2">
+                        <Users size={24} />
+                        Pedidos Realizados ({pedidos.length})
+                      </h2>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => generateExcel('Saica 4A')}
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition flex items-center gap-2"
+                        >
+                          <Download size={18} />
+                          Saica 4A
+                        </button>
+                        <button
+                          onClick={() => generateExcel('Saica 4B')}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2"
+                        >
+                          <Download size={18} />
+                          Saica 4B
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {pedidos.map(pedido => (
+                        <div key={pedido.id} className="border-2 border-gray-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-bold text-lg">{pedido.usuario}</span>
+                                <span className="text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                                  {pedido.pedido}
+                                </span>
+                                <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                  {pedido.tipo}
+                                </span>
+                              </div>
+                              <div className="text-sm text-gray-700 space-y-1">
+                                {pedido.primero1 && <p>• {pedido.primero1}</p>}
+                                {pedido.primero2 && <p>• {pedido.primero2}</p>}
+                                {pedido.segundo && <p>• {pedido.segundo}</p>}
+                                {pedido.segundo2 && <p>• {pedido.segundo2}</p>}
+                                {pedido.postre && <p>• {pedido.postre}</p>}
+                              </div>
+                            </div>
+                            {pedido.usuario === username && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEdit(pedido)}
+                                  className="text-blue-600 hover:text-blue-700 p-2"
+                                >
+                                  <Edit2 size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(pedido)}
+                                  className="text-red-600 hover:text-red-700 p-2"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MenuDelDia />);
+    </script>
 </body>
 </html>
-```
-
-
